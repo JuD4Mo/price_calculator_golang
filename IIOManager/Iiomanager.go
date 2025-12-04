@@ -1,4 +1,4 @@
-package iiomanager
+package IIOManager
 
 type IOManager interface {
 	ReadLines() ([]string, error)

@@ -3,12 +3,12 @@ package prices
 import (
 	"fmt"
 
+	"example.com/price-calculator/IIOManager"
 	"example.com/price-calculator/conversion"
-	"example.com/price-calculator/iiomanager"
 )
 
 type TaxIncludedPriceJob struct {
-	IOManager         iiomanager.IOManager `json:"-"`
+	IOManager         IIOManager.IOManager `json:"-"`
 	TaxRate           float64              `json:"tax_rate"`
 	Prices            []float64            `json:"input_prices"`
 	TaxIncludedPrices map[string]string    `json:"tax_included_prices"`
@@ -31,10 +31,12 @@ func (job *TaxIncludedPriceJob) readPrices() error {
 	return nil
 }
 
-func (job TaxIncludedPriceJob) Process() error {
+func (job TaxIncludedPriceJob) Process(doneChan chan bool, errorChan chan error) {
 	err := job.readPrices()
 	if err != nil {
-		return err
+		// return err
+		errorChan <- err
+		return
 	}
 	result := make(map[string]string)
 	for _, price := range job.Prices {
@@ -43,10 +45,11 @@ func (job TaxIncludedPriceJob) Process() error {
 	}
 
 	job.TaxIncludedPrices = result
-	return job.IOManager.WriteResult(job)
+	job.IOManager.WriteResult(job)
+	doneChan <- true
 }
 
-func NewTaxIncludedPriceJob(iom iiomanager.IOManager, taxRate float64) *TaxIncludedPriceJob {
+func NewTaxIncludedPriceJob(iom IIOManager.IOManager, taxRate float64) *TaxIncludedPriceJob {
 	return &TaxIncludedPriceJob{
 		IOManager: iom,
 		Prices:    []float64{10, 20, 30},
